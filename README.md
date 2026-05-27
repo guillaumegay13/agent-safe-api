@@ -81,13 +81,23 @@ api.sh get  <service> <path>          # GET  <base_url>/<path>
 api.sh post <service> <path> body.json   # POST a JSON body (file or "-" for stdin)
 ```
 
-## Using it from a skill / agent
+## Install the skill (optional)
 
-Tell the agent (in a skill, system prompt, or AGENTS.md) to make **all** credentialed calls through
-`api.sh`, and never to `source` the env file, `cat` it, run `env`, `set -x`, or `curl -v`. See
-[`skills/example-skill/SKILL.md`](skills/example-skill/SKILL.md) for a worked example. The pattern is
-agent-agnostic — it works the same whether the runner is Claude Code, openclaw, or anything else that
-executes shell.
+This repo ships an agent skill at [`skills/agent-safe-api/SKILL.md`](skills/agent-safe-api/SKILL.md).
+Installing it makes your agent reach for `api.sh` automatically whenever it needs to call an
+authenticated API — no need to repeat the rules each session. For Claude Code (and compatible
+agents that auto-discover `SKILL.md` skills):
+
+```bash
+cp -r agent-safe-api/skills/agent-safe-api ~/.claude/skills/
+```
+
+Or just hand the agent this repo's URL and ask it to install the skill. For agents that don't use
+the `SKILL.md` format, the same rules work pasted into a system prompt or `AGENTS.md`.
+
+The pattern is agent-agnostic: make **all** credentialed calls through `api.sh`, and never `source`
+the env file, `cat` it, run `env`, `set -x`, or `curl -v`. It works the same whether the runner is
+Claude Code, openclaw, Cursor, or anything else that executes shell.
 
 ## Hygiene guarantees (and their limits)
 
