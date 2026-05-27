@@ -101,9 +101,24 @@ Claude Code, openclaw, Cursor, or anything else that executes shell.
 
 ## Hygiene guarantees (and their limits)
 
-`api.sh` guarantees secrets don't reach stdout/stderr or the command line. It can't stop *you* from
-writing a skill that runs `env` or `cat secrets.env` anyway — so keep those out of your skills, and keep
-`secrets.env` `chmod 600` and git-ignored.
+What `api.sh` guarantees: secrets don't reach **stdout, stderr, or the command the agent typed** —
+the parts that flow into the model's context. It disables any inherited `xtrace` (`set +x`,
+`unset BASH_XTRACEFD`) before touching a secret, and strips trace options for the token-command
+subshell, so even an agent running with `SHELLOPTS=xtrace` can't trace a token into the transcript.
+
+What it does **not** do:
+
+- **It doesn't hide secrets from other local processes.** Auth goes in curl's `-u`/`-H` arguments,
+  which are visible in `ps`/`/proc/<pid>/cmdline` to other processes on the same machine for the
+  brief moment curl runs. That's outside the threat model (the agent never sees argv), but on a
+  shared box it matters.
+- **It prints response bodies verbatim.** If you GET a token-minting endpoint, or an API reflects
+  your credential back in an (error) body, that lands in stdout → the agent. Don't point it at
+  endpoints whose responses contain secrets.
+- **It can't stop *you*** from writing a skill that runs `env` or `cat secrets.env` anyway — so keep
+  those out of your skills, and keep `secrets.env` `chmod 600` and git-ignored.
+
+Requires `bash` (3.2+, so stock macOS works) and `curl`.
 
 ## License
 

@@ -37,6 +37,8 @@
 #
 # SECRETS  loaded from $AGENT_API_ENV (default ~/.config/agent-safe-api/secrets.env),
 #   sourced on every call. `chmod 600` it; never commit it.
+set +x                 # disable any xtrace inherited via SHELLOPTS/BASH_XTRACEFD before
+unset -v BASH_XTRACEFD 2>/dev/null || true   # touching secrets — xtrace would echo them to stderr
 set -euo pipefail
 umask 077
 
@@ -80,7 +82,8 @@ auth_args(){
                { [ -n "${!lv:-}" ] && [ -n "${!pv:-}" ]; } || die "missing env var(s): $2";
                AUTH_ARGS=(-u "${!lv}:${!pv}");;
     token-cmd) local cv="$2"; [ -n "${!cv:-}" ] || die "missing env var: $cv";
-               local tok; tok="$(bash -c "${!cv}")"; [ -n "$tok" ] || die "token command produced no token";
+               # strip xtrace opts for the child so a traced token command can't echo the token
+               local tok; tok="$(env -u SHELLOPTS -u BASH_XTRACEFD bash -c "${!cv}")"; [ -n "$tok" ] || die "token command produced no token";
                AUTH_ARGS=(-H "Authorization: Bearer ${tok}");;
     *) die "unknown auth type: $1";;
   esac
@@ -90,11 +93,18 @@ cmd="${1:-}"; shift || true
 case "$cmd" in
   get)
     find_service "${1:?service}"; auth_args "$F_AUTH" "$F_SPEC"
-    curl -sS "${AUTH_ARGS[@]}" "$F_BASE/${2#/}"
+    out="$(mktemp)"; trap 'rm -f "$out"' EXIT
+    # ${AUTH_ARGS[@]+...} form so an empty array doesn't trip `set -u` on bash 3.2 (macOS)
+    code="$(curl -sS -o "$out" -w '%{http_code}' ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"} "$F_BASE/${2#/}")" || { cat "$out"; exit 1; }
+    cat "$out"
+    [ "${code:0:1}" = "2" ] || { echo "api.sh: HTTP $code from $F_NAME/${2#/}" >&2; exit 1; }
     ;;
   post)
     find_service "${1:?service}"; auth_args "$F_AUTH" "$F_SPEC"
-    body_in "${3:--}" | curl -sS "${AUTH_ARGS[@]}" -H 'Content-Type: application/json' --data-binary @- "$F_BASE/${2#/}"
+    out="$(mktemp)"; trap 'rm -f "$out"' EXIT
+    code="$(body_in "${3:--}" | curl -sS -o "$out" -w '%{http_code}' ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"} -H 'Content-Type: application/json' --data-binary @- "$F_BASE/${2#/}")" || { cat "$out"; exit 1; }
+    cat "$out"
+    [ "${code:0:1}" = "2" ] || { echo "api.sh: HTTP $code from $F_NAME/${2#/}" >&2; exit 1; }
     ;;
   services)
     grep -vE '^[[:space:]]*(#|$)' "$CONF" | while IFS='|' read -r n b a s _; do printf '%s\t(%s, %s)\n' "$(trim "$n")" "$(trim "$b")" "$(trim "$a")"; done
@@ -112,7 +122,7 @@ case "$cmd" in
       if [ "$ok" = 0 ]; then printf '  %-14s not configured\n' "$n"; continue; fi
       if [ -n "$tp" ]; then
         auth_args "$a" "$s" 2>/dev/null
-        code="$(curl -sS -o /dev/null -w '%{http_code}' "${AUTH_ARGS[@]}" "$b/${tp#/}" 2>/dev/null)"
+        code="$(curl -sS -o /dev/null -w '%{http_code}' ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"} "$b/${tp#/}" 2>/dev/null)"
         [ "${code:0:1}" = "2" ] && printf '  %-14s OK (HTTP %s)\n' "$n" "$code" || printf '  %-14s FAIL (HTTP %s)\n' "$n" "$code"
       else printf '  %-14s configured (no test path)\n' "$n"; fi
     done
