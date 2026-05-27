@@ -1,0 +1,24 @@
+api.sh
+  s_d3dd0400bb6227::t_4a07f2778f204c 40-41
+  s_d3dd0400bb6227::t_aadb4c3e58f46d 85-86
+  s_d3dd0400bb6227::t_d79a761d784db5 96-100,104-107
+  s_d3dd0400bb6227::t_f8440451121d08 125
+README.md
+  s_d3dd0400bb6227::t_39d7afcc36b8aa 104-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "518c939879610979fbf685de9d69b7e445b235e5",
+  "prompts": {},
+  "sessions": {
+    "s_d3dd0400bb6227": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b7615d01-5ff0-4d27-98b3-063c2f3d0e7d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Guillaume Gay <guillaume.gay@protonmail.com>"
+    }
+  }
+}
