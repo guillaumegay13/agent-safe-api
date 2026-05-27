@@ -1,0 +1,12 @@
+# Never commit real secrets or the active service registry
+secrets.env
+*.env
+!*.env.example
+
+# The active config may contain internal hostnames; keep only the example
+services.conf
+
+# Scratch
+data/
+long_responses/
+*.tmp
