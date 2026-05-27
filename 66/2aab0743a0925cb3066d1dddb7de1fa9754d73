@@ -1,0 +1,21 @@
+skills/agent-safe-api/SKILL.md
+  s_d3dd0400bb6227::t_0d684439ae566a 1-60
+README.md
+  s_d3dd0400bb6227::t_cda59386775374 84,86-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "662aab0743a0925cb3066d1dddb7de1fa9754d73",
+  "prompts": {},
+  "sessions": {
+    "s_d3dd0400bb6227": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b7615d01-5ff0-4d27-98b3-063c2f3d0e7d",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Guillaume Gay <guillaume.gay@protonmail.com>"
+    }
+  }
+}
