@@ -38,7 +38,7 @@ $ api.sh get github rate_limit
 ## Install
 
 ```bash
-git clone https://github.com/<you>/agent-safe-api.git
+git clone https://github.com/guillaumegay13/agent-safe-api.git
 chmod +x agent-safe-api/api.sh
 # optional: put it on PATH
 ln -s "$PWD/agent-safe-api/api.sh" ~/.local/bin/api.sh
